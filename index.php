@@ -46,6 +46,7 @@
 				let basePackageName = $("#base-package").val()
 				generateInter($(element).val(), basePackageName)
 				generateImpl($(element).val(), basePackageName)
+				generateDAO($(element).val(),basePackageName)
 			})
 		})
 		function download(filename, text) {
@@ -75,7 +76,8 @@
 			$(this).parent().parent().remove();
 		})
 		function generateInter(name, basePackageName) {
-			let data = "import " + basePackageName + "." + name + ";\n"
+			let data = "package " + basePackageName + ".service.inter;\n" +
+				"\nimport " + basePackageName + ".entity." + name + ";\n"
 				+ "import org.springframework.stereotype.Service;\n" +
 				"import java.util.List;\n"
 			data += "@Service \n"
@@ -84,26 +86,39 @@
 			data += name + " findById(Integer id);\n"
 			data += name + " save(" + name + " " + "v" + name + ");\n"
 			data += "int deleteById(Integer id);\n}"
-			download(name+"ServiceInter.java", data)
+			download(name + "ServiceInter.java", data)
 		}
 		function generateImpl(name, basePackageName) {
-			let data = "import " + basePackageName + "." + name + ";\n"
+			let data = "package " + basePackageName + ".service.impl;\n"
+				+ "import " + basePackageName + ".entity." + name + ";\n"
 				+ "import org.springframework.stereotype.Service;\n" +
-				"import java.util.List;\n"
+				"import java.util.List;\n" + "import " + basePackageName + ".dao." + name + "DAOInter;\n"+
+				"import " + basePackageName + ".service.inter." + name + "ServiceInter;\n"+"import org.springframework.beans.factory.annotation.Autowired;"
 			data += "@Service \n"
-			data += "public class " + name + "ServiceImpl implements "+name+"ServiceInter{\n\n"
+			data += "public class " + name + "ServiceImpl implements " + name + "ServiceInter{\n\n"
+			data += "@Autowired\n" + name + "DAOInter a"+name+"DaoInter;\n"
 			data += "@Override\n" +
 				"public List<" + name + "> findAll() {\n" +
-				"return null;\n}";
-			data += "@Override\n" +
+				"return (List<"+name+">)a"+name+"DaoInter.findAll();\n}";
+			data += "\n@Override\n" +
 				"public " + name + " findById(Integer id) {\n" +
-				"return null;\n}\n";
+				"return a"+name+"DaoInter.findById(id).get();\n}\n";
 			data += "@Override\n" +
 				"public " + name + " save(" + name + " v" + name + ") {\n" +
-				" return null;\n}\n"
+				" return a"+name+"DaoInter.save(v"+name+");\n}\n"
 			data += "@Override\n" +
-				"public int deleteById(Integer id) { return 0;\n}\n}"
-				download(name+"ServiceImpl.java",data)
+				"public int deleteById(Integer id) {"
+					+"a"+name+"DaoInter.deleteById(id);"+  "\n return 0;\n}\n}"
+			download(name + "ServiceImpl.java", data)
+		}
+		function generateDAO(name, basePackageName) {
+			let data = "package " + basePackageName + ".dao;\n"
+			data += "import " + basePackageName + ".entity." + name + ";\n"
+			data += "import org.springframework.data.repository.CrudRepository;\n" +
+				"import javax.transaction.Transactional;\n"
+			data += "@Transactional\n" +
+				"public interface " + name + "DAOInter extends CrudRepository<" + name + ", Integer> {\n\n}"
+			download(name + "DAOInter.java", data)
 		}
 	})
 
